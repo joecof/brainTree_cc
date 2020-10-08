@@ -3,7 +3,7 @@ import axios from 'axios'
 import { Grid } from '@material-ui/core/';
 import { withStyles } from '@material-ui/core/styles'
 import ButtonGroup from './ButtonGroup'
-import BraintreeForm from './BraintreeForm'
+import Routes from './Routes'
 
 const styles = theme => ({
   container: {
@@ -12,6 +12,7 @@ const styles = theme => ({
   },
   buttonContainer: {
     marginTop: 100,
+    marginBottom:25
   },
   backArrow: {
     marginTop: 50
@@ -30,6 +31,7 @@ class App extends Component {
 
   componentDidMount() {
     this.getClientToken();
+    
   }
 
   getClientToken = async () => {
@@ -57,10 +59,11 @@ class App extends Component {
           <Grid item xs = {12} className = {classes.buttonContainer}>
             <ButtonGroup/>
           </Grid>
-          {/* <Grid item xs = {12} align = 'center'>
-            <h1> BrainTree </h1>
-            <BraintreeForm clientToken = {this.state.clientToken} loading = {this.state.loading}/>
-          </Grid> */}
+          <Grid item xs = {12}>
+            <Routes
+              clientToken = {this.state.clientToken}
+            />
+          </Grid>
         </Grid>
       </div>
     )

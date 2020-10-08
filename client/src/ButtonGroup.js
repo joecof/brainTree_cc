@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
 import { Button, Grid } from '@material-ui/core/';
 import { withStyles } from '@material-ui/core/styles'
+import { Link } from 'react-router-dom';
+
 
 const styles = theme => ({
   button: {
@@ -16,11 +18,15 @@ class ButtonGroup extends Component {
     return (
       <div> 
         <Grid container spacing = {0}>
-          <Grid item xs = {6}>
-            <Button variant = "outlined" className = {classes.button}> PAY </Button>
+          <Grid item xs = {6} align='left'>
+            <Link to="/braintree/pay">
+              <Button variant = "outlined" className = {classes.button}> PAY </Button>
+            </Link>
           </Grid>
-          <Grid item xs = {6}>
-            <Button variant = "outlined" className = {classes.button}> REFUND </Button>
+          <Grid item xs = {6} align='right'>
+            <Link to="/refund">
+              <Button variant = "outlined" className = {classes.button}> REFUND </Button>
+            </Link>          
           </Grid>
         </Grid>           
       </div>
