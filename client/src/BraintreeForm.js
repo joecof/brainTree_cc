@@ -6,7 +6,8 @@ import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
   container: {
-    width: '100%'
+    width: '100%',
+    marginTop: 50
   }
 })
 

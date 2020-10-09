@@ -61,7 +61,7 @@ class App extends Component {
     this.setState({
       isAuth: false
     })
-    
+
     localStorage.removeItem('expiryDate');
     sessionStorage.removeItem('logged');
   }
@@ -87,7 +87,6 @@ class App extends Component {
     e.preventDefault();
 
     try {
-
       const {data, status} = await axios.post('/login', loginData);
       if(status !== 200) throw new Error('could not contact API on /login')
       if(data) this.setUserSession();
@@ -104,9 +103,7 @@ class App extends Component {
   }
 
   getClientToken = async () => {
-
     try {
-
       const {data, status} = await axios.get('/generateToken');
       if(status !== 200) return;
       this.setState({ clientToken: data })
