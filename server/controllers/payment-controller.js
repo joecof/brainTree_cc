@@ -29,15 +29,17 @@ exports.customerCheckout = async (req, res, next) => {
 
     const { transaction } = req.body;
 
-    // const customer = {
-    //   id: 11,
-    //   firstName: 'joe',
-    //   // email: 'joe.fong@monark.com',
-    // }
+    const customer = {
+      id: "11",
+      name: 'joe',
+      email: 'joe.fong@monark.com',
+    }
 
     // const response = await gateway.customer.create(customer);
 
-    // await gateway.find.delete(11).then(result => console.log(result)).catch(e => console.log(e));
+    // console.log(response);
+
+    await gateway.customer.find("11").then(result => console.log(result)).catch(e => console.log(e));
     // const customers = await dbService.get('SELECT * FROM customers');
 
     // console.log(customers);
@@ -51,6 +53,8 @@ exports.customerCheckout = async (req, res, next) => {
     
 
   } catch(e) {
+
+    console.log(e);
 
   }
 
