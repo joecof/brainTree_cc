@@ -1,4 +1,5 @@
 const braintree = require("braintree");
+const dbService = require('../db/database-service')
 
 const gateway = new braintree.BraintreeGateway({
   environment: braintree.Environment.Sandbox,
@@ -20,6 +21,39 @@ exports.generateToken = async (req, res, next) => {
     console.log(e);
     res.status(401).send(e.message);
   }
+}
+
+exports.customerCheckout = async (req, res, next) => {
+
+  try { 
+
+    const { transaction } = req.body;
+
+    // const customer = {
+    //   id: 11,
+    //   firstName: 'joe',
+    //   // email: 'joe.fong@monark.com',
+    // }
+
+    // const response = await gateway.customer.create(customer);
+
+    // await gateway.find.delete(11).then(result => console.log(result)).catch(e => console.log(e));
+    // const customers = await dbService.get('SELECT * FROM customers');
+
+    // console.log(customers);
+
+    // const {name, email} = req.body;
+    // const customer = {
+    //   name: 
+    // }
+
+    // gateway.customer.create()
+    
+
+  } catch(e) {
+
+  }
+
 }
 
 exports.checkout = async (req, res, next) => {

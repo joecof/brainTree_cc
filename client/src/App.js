@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
+import { withRouter } from "react-router-dom";
 import axios from 'axios'
 import { Grid } from '@material-ui/core/';
 import { withStyles } from '@material-ui/core/styles'
-import ButtonGroup from './ButtonGroup'
-import Routes from './Routes'
+import Container from './Container'
 
 const styles = theme => ({
   container: {
@@ -25,13 +25,82 @@ class App extends Component {
     super();
 
     this.state = {
+      isAuth: false, 
       clientToken: '',
     }
   }
 
   componentDidMount() {
-    this.getClientToken();
+
+    if(!this.isSessionValid()){
+      return;
+    } 
+
+    this.getUserSessionInfo()
+    this.setAutoLogout(this.getRemainingSessionTime());
+  }
+
+  getUserSessionInfo = () => {
+    this.setState({
+      isAuth: true,
+    });
+  }
+
+  isSessionValid = () => {
+    return sessionStorage.getItem('logged')
+  }
+
+  setUserSession = async () => {
+    localStorage.setItem('expiryDate', this.getExpiryDate().toISOString());
+    sessionStorage.setItem('logged', true)
+    this.setState({isAuth: true})
+  }
+
+  endUserSession = () => {
+
+    this.setState({
+      isAuth: false
+    })
     
+    localStorage.removeItem('expiryDate');
+    sessionStorage.removeItem('logged');
+  }
+
+  getRemainingSessionTime = () => {
+    const expiryDate = localStorage.getItem('expiryDate');
+    const remainingMilliseconds = new Date(expiryDate).getTime() - new Date().getTime();
+    return remainingMilliseconds;
+  }
+
+  getExpiryDate = () => {
+    const expiryDate = new Date(new Date().getTime() + 60 * 60 * 1000);
+    return expiryDate;
+  }
+
+  setAutoLogout = (milliseconds) => {
+    setTimeout(() => {
+      this.logoutHandler();
+    }, milliseconds);
+  };
+
+  loginHandler = async (e, loginData) => {
+    e.preventDefault();
+
+    try {
+
+      const {data, status} = await axios.post('/login', loginData);
+      if(status !== 200) throw new Error('could not contact API on /login')
+      if(data) this.setUserSession();
+      this.props.history.push('/dashboard')
+  
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  logoutHandler = () => {
+    this.endUserSession();
+    this.props.history.push('/');
   }
 
   getClientToken = async () => {
@@ -39,9 +108,7 @@ class App extends Component {
     try {
 
       const {data, status} = await axios.get('/generateToken');
-
       if(status !== 200) return;
-  
       this.setState({ clientToken: data })
 
     } catch(e) {
@@ -56,11 +123,12 @@ class App extends Component {
     return (
       <div className={classes.root}>
         <Grid container spacing = {0} className = {classes.container}>
-          <Grid item xs = {12} className = {classes.buttonContainer}>
-            <ButtonGroup/>
-          </Grid>
           <Grid item xs = {12}>
-            <Routes
+            <Container
+              isAuth = {this.state.isAuth}
+              loginHandler = {this.loginHandler}
+              logoutHandler = {this.logoutHandler}
+              getClientToken = {this.getClientToken}
               clientToken = {this.state.clientToken}
             />
           </Grid>
@@ -70,4 +138,4 @@ class App extends Component {
   }
 }
 
-export default withStyles(styles, { withTheme: true})(App);
+export default withStyles(styles, { withTheme: true})(withRouter(App));

@@ -10,8 +10,15 @@ const styles = theme => ({
   }
 })
 
-
 class ButtonGroup extends Component {
+
+  constructor() {
+    super();
+
+    this.state = {
+      clientToken: ''
+    }
+  }
 
   render() {
     const { classes } = this.props;
@@ -19,8 +26,8 @@ class ButtonGroup extends Component {
       <div> 
         <Grid container spacing = {0}>
           <Grid item xs = {6} align='left'>
-            <Link to="/braintree/pay">
-              <Button variant = "outlined" className = {classes.button}> PAY </Button>
+            <Link to="/dashboard/pay">
+              <Button variant = "outlined" className = {classes.button} onClick = {this.props.getClientToken}> PAY </Button>
             </Link>
           </Grid>
           <Grid item xs = {6} align='right'>

@@ -1,0 +1,11 @@
+{
+  "host": "us-cdbr-east-02.cleardb.com",
+  "user": "b220518cb24bc2",
+  "password": "0e8e0b11", 
+  "database": "heroku_9dda9ce9b1dbde3",
+  "port": 3306,
+  "multipleStatements": "true",
+  "connectionLimit": 10,
+  "waitForConnections": true, 
+  "queueLimit": 10
+}
