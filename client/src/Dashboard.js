@@ -26,7 +26,7 @@ class Dashboard extends Component {
           </Grid>
           <Grid item xs = {12} className = {classes.form}>
             <ButtonGroup getClientToken = {this.props.getClientToken}/>
-            <BraintreeForm clientToken = {this.props.clientToken}/>
+            <BraintreeForm clientToken = {this.props.clientToken} user = {this.props.user}/>
           </Grid>
         </Grid>
       </div>

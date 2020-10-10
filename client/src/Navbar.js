@@ -20,7 +20,7 @@ class Navbar extends Component {
         <AppBar position="static">
           <Toolbar>
             <Typography variant="h6" className={classes.title}>
-              Payment
+              Braintree
             </Typography>
             <Button color="inherit" onClick = {this.props.logoutHandler}>Logout</Button>
           </Toolbar>

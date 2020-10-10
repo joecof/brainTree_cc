@@ -33,6 +33,7 @@ export default class Routes extends Component {
                   render={(props) => (
                     <Dashboard
                       {...props}
+                      user = {this.props.user}
                       clientToken = {this.props.clientToken}
                       getClientToken = {this.props.getClientToken}
                       logoutHandler = {this.props.logoutHandler}

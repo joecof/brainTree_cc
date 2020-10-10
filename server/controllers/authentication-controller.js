@@ -5,13 +5,13 @@ exports.login = async (req, res, next) => {
   try {
 
     const {email, password} = req.body
-    const customerInfo = await dbService.get('SELECT email, password FROM customers WHERE email=? AND password=?', [email, password]);
+    const customerInfo = await dbService.get('SELECT customerId, name, email, password FROM customers WHERE email=? AND password=?', [email, password]);
 
-    if(!customerInfo) {
-      throw new Error('could not find this customer');
-    } 
+    if(!customerInfo) throw new Error('could not find this customer');
 
-    res.status(200).send({success: true})
+    delete customerInfo.password;
+    
+    res.status(200).send({customerInfo})
 
   } catch(e) {
     console.log(e);

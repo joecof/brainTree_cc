@@ -7,7 +7,7 @@ import Container from './Container'
 
 const styles = theme => ({
   container: {
-    width: 800,
+    width: 900,
     margin: '0 auto',
   },
   buttonContainer: {
@@ -26,62 +26,18 @@ class App extends Component {
 
     this.state = {
       isAuth: false, 
+      user: null,
       clientToken: '',
     }
   }
 
   componentDidMount() {
 
-    if(!this.isSessionValid()){
-      return;
-    } 
-
+    if(!this.isSessionValid()) return;
+    
     this.getUserSessionInfo()
     this.setAutoLogout(this.getRemainingSessionTime());
   }
-
-  getUserSessionInfo = () => {
-    this.setState({
-      isAuth: true,
-    });
-  }
-
-  isSessionValid = () => {
-    return sessionStorage.getItem('logged')
-  }
-
-  setUserSession = async () => {
-    localStorage.setItem('expiryDate', this.getExpiryDate().toISOString());
-    sessionStorage.setItem('logged', true)
-    this.setState({isAuth: true})
-  }
-
-  endUserSession = () => {
-
-    this.setState({
-      isAuth: false
-    })
-
-    localStorage.removeItem('expiryDate');
-    sessionStorage.removeItem('logged');
-  }
-
-  getRemainingSessionTime = () => {
-    const expiryDate = localStorage.getItem('expiryDate');
-    const remainingMilliseconds = new Date(expiryDate).getTime() - new Date().getTime();
-    return remainingMilliseconds;
-  }
-
-  getExpiryDate = () => {
-    const expiryDate = new Date(new Date().getTime() + 60 * 60 * 1000);
-    return expiryDate;
-  }
-
-  setAutoLogout = (milliseconds) => {
-    setTimeout(() => {
-      this.logoutHandler();
-    }, milliseconds);
-  };
 
   loginHandler = async (e, loginData) => {
     e.preventDefault();
@@ -89,7 +45,7 @@ class App extends Component {
     try {
       const {data, status} = await axios.post('/login', loginData);
       if(status !== 200) throw new Error('could not contact API on /login')
-      if(data) this.setUserSession();
+      if(data) this.setUserSession(data);      
       this.props.history.push('/dashboard')
   
     } catch (e) {
@@ -102,10 +58,41 @@ class App extends Component {
     this.props.history.push('/');
   }
 
+  isSessionValid = () => sessionStorage.getItem('logged');
+
+  getUserSessionInfo = () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    this.setState({ 
+      isAuth: true,
+      user: user
+    });
+  }
+  
+  setUserSession = async (data) => {
+    localStorage.setItem('user', JSON.stringify(data.customerInfo));
+    localStorage.setItem('expiryDate', this.getExpiryDate().toISOString());
+    sessionStorage.setItem('logged', true)
+    this.setState({isAuth: true})
+  }
+
+  endUserSession = () => {
+    this.setState({ isAuth: false })
+
+    localStorage.removeItem('user');
+    localStorage.removeItem('expiryDate');
+    sessionStorage.removeItem('logged');
+  }
+
+  getRemainingSessionTime = () => new Date(localStorage.getItem('expiryDate')).getTime() - new Date().getTime();
+  getExpiryDate = () => new Date(new Date().getTime() + 60 * 60 * 1000);
+  setAutoLogout = (milliseconds) => setTimeout(() => {this.logoutHandler();}, milliseconds);
+
   getClientToken = async () => {
     try {
-      const {data, status} = await axios.get('/generateToken');
+
+      const {data, status} = await axios.post('/generateToken', {user: this.state.user});
       if(status !== 200) return;
+
       this.setState({ clientToken: data })
 
     } catch(e) {
@@ -114,7 +101,6 @@ class App extends Component {
   }
 
   render() {
-
     const {classes} = this.props;
 
     return (
@@ -123,6 +109,7 @@ class App extends Component {
           <Grid item xs = {12}>
             <Container
               isAuth = {this.state.isAuth}
+              user = {this.state.user}
               loginHandler = {this.loginHandler}
               logoutHandler = {this.logoutHandler}
               getClientToken = {this.getClientToken}

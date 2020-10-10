@@ -41,16 +41,18 @@ class BraintreeForm extends Component {
     }
   }
 
-  handleCustomerPayment = async () => {
+  addPaymentMethod = async () => {
+    
     try {
 
       const transaction = await this.instance.requestPaymentMethod();
+
       const data = {
-        amount: this.state.amount,
-        transaction: transaction
+        transaction: transaction,
+        user: this.props.user
       }
 
-      const response = await axios.post('/customerCheckout', data); 
+      const response = await axios.post('/addPaymentMethod', data); 
       if(response.status !== 200) throw new Error('could not contact API on /customerCheckout')
 
     } catch(e) {
@@ -73,7 +75,7 @@ class BraintreeForm extends Component {
                     onInstance={(instance) => (this.instance = instance)}
                   />
                   {/* <Button variant = "contained" color="primary" fullWidth onClick = {this.handlePayment}>Submit</Button> */}
-                  <Button variant = "contained" color="primary" fullWidth onClick = {this.handleCustomerPayment}>Submit</Button>
+                  <Button variant = "contained" color="primary" fullWidth onClick = {this.addPaymentMethod}>Submit</Button>
                 </>
                 :
                 null

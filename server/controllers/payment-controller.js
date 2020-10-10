@@ -11,7 +11,14 @@ const gateway = new braintree.BraintreeGateway({
 exports.generateToken = async (req, res, next) => {
   
   try {
-    const response = await gateway.clientToken.generate();
+    
+    const {user} = req.body;
+
+    const userInfo = await dbService.get('SELECT customerId FROM customers WHERE customerId=? AND name=? AND email=?', Object.values(user));
+
+    const customer = await gateway.customer.find(String(userInfo.customerId));
+
+    const response = !customer ? await gateway.clientToken.generate({}) : await gateway.clientToken.generate({customerId: userInfo.customerId})
 
     if(!response) throw new Error('could not generate client token')
 
@@ -23,41 +30,31 @@ exports.generateToken = async (req, res, next) => {
   }
 }
 
-exports.customerCheckout = async (req, res, next) => {
+exports.addPaymentMethod = async (req, res, next) => {
 
   try { 
 
-    const { transaction } = req.body;
+    const { transaction, user } = req.body;
+    const userInfo = await dbService.get('SELECT customerId FROM customers WHERE customerId=? AND name=? AND email=?', Object.values(user));
+    if(!userInfo) throw new Error('customer does not exist in database');
 
     const customer = {
-      id: "11",
-      name: 'joe',
-      email: 'joe.fong@monark.com',
+      id: userInfo.customerId,
+      firstName: userInfo.name,
+      email: userInfo.email,
+      paymentMethodNonce: transaction.nonce
     }
 
-    // const response = await gateway.customer.create(customer);
+    const response = await gateway.customer.create(customer);
 
-    // console.log(response);
+    if(!response.success) throw new Error(response.message)
 
-    await gateway.customer.find("11").then(result => console.log(result)).catch(e => console.log(e));
-    // const customers = await dbService.get('SELECT * FROM customers');
-
-    // console.log(customers);
-
-    // const {name, email} = req.body;
-    // const customer = {
-    //   name: 
-    // }
-
-    // gateway.customer.create()
-    
+    res.status(200).send({success: response.success, paymentToken:  response.customer.paymentMethods[0].token})    
 
   } catch(e) {
-
-    console.log(e);
-
+    res.status(401).send({success: false, message: e.message})    
+    console.log(e.message);
   }
-
 }
 
 exports.checkout = async (req, res, next) => {

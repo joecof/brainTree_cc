@@ -7,6 +7,7 @@ const Container = (props) => {
     <>
       <Routes 
         isAuth = {props.isAuth}
+        user = {props.user}
         loginHandler = {props.loginHandler}
         logoutHandler = {props.logoutHandler}
         getClientToken = {props.getClientToken}

@@ -8,9 +8,8 @@ const router = express.Router();
 router.post('/login', authController.login);
 
 //braintree
-router.get('/generateToken', paymentController.generateToken);
+router.post('/generateToken', paymentController.generateToken);
 router.post('/checkout', paymentController.checkout);
-router.post('/customerCheckout', paymentController.customerCheckout);
-
+router.post('/addPaymentMethod', paymentController.addPaymentMethod);
 
 module.exports = router;
