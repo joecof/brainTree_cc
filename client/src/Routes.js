@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { Route, Switch } from "react-router-dom";
 import Dashboard from './Dashboard'
 import NavigationGroup from './NavigationGroup'
+import Delete from './Delete'
 import Login from './Login'
 import BraintreeForm from './BraintreeForm'
 
@@ -43,9 +44,9 @@ export default class Routes extends Component {
                 <Route 
                   path={`${url}/delete`} 
                   render={(props) => (
-                    <NavigationGroup
+                    <Delete
                       {...props}
-                      clientToken = {this.props.clientToken}
+                      user = {this.props.user}
                       getClientToken = {this.props.getClientToken}
                     />)}
                   />

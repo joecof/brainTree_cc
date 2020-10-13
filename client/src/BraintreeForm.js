@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import DropIn from "braintree-web-drop-in-react";
 import { Grid, Button } from '@material-ui/core/';
 import { withStyles } from '@material-ui/core/styles';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 import axios from 'axios';
 
 const styles = theme => ({
@@ -19,7 +21,8 @@ class BraintreeForm extends Component {
     this.instance = null;
 
     this.state = {
-      amount: 1, 
+      amount: 23, 
+      save: false
     }
   }
 
@@ -28,20 +31,22 @@ class BraintreeForm extends Component {
     this.props.getClientToken();
   }
 
+  handleChange = (event) => {
+    this.setState({ ...this.state, [event.target.name]: event.target.checked });
+  };
+
   addPaymentMethod = async () => {
     
     try {
 
-      const transaction = await this.instance.requestPaymentMethod();
-
-      const data = {
-        transaction: transaction,
+      const addedPaymentMethod = await axios.post('/addPaymentMethod', {
+        transaction: await this.instance.requestPaymentMethod(),
         user: this.props.user
-      }
+      }); 
 
-      const response = await axios.post('/addPaymentMethod', data); 
+      if(addedPaymentMethod.status !== 200) throw new Error('could not contact API on /paymentmethod')
 
-      if(response.status !== 200) throw new Error('could not contact API on /paymentmethod')
+      return addedPaymentMethod;
 
     } catch(e) {
       console.log(e);
@@ -52,22 +57,32 @@ class BraintreeForm extends Component {
 
     try {
 
-      const transaction = await this.instance.requestPaymentMethod();
+      if(!this.state.save) {
+        const checkout = await axios.post('/checkout', {
+          transaction:  await this.instance.requestPaymentMethod(),
+          user: this.props.user,
+          amount: this.state.amount
+        });
 
-      const data = {
-        transaction: transaction,
-        user: this.props.user,
-        amount: this.state.amount
+        if(checkout.status !== 200) throw new Error('could not contact API on /checkout')
+
+        return;
       }
 
-      const response = await axios.post('/checkout', data);
+      const savedPaymentMethod = await this.addPaymentMethod();
+      if(!savedPaymentMethod) throw new Error('could not contact API on /addPaymentmethod')
 
-      if(response.status !== 200) throw new Error('could not contact API on /checkout')
+      const checkout = await axios.post('/checkout', {
+        paymentMethodToken: savedPaymentMethod.data.paymentToken,
+        user: this.props.user,
+        amount: this.state.amount
+      });
+
+      if(checkout.status !== 200) throw new Error('could not contact API on /checkout')
        
     } catch(e) {
       console.log(e);
     }
-
   }
 
   determineAction = (type) => {
@@ -76,7 +91,13 @@ class BraintreeForm extends Component {
       case 'paymentMethod': 
         return <Button variant='contained' color='primary' fullWidth onClick = {this.addPaymentMethod}> Add Payment Method</Button>
       case 'checkout': 
-        return <Button variant='contained' color='primary' fullWidth onClick = {this.checkout}> Checkout </Button>
+        return (
+        <> 
+          <FormControlLabel
+            control={<Checkbox  name="save" onChange={this.handleChange}/>}
+            label="Save Payment Method" /> 
+          <Button variant='contained' color='primary' fullWidth onClick = {this.checkout}> Checkout </Button>
+        </> )
       default: 
         return;
     }

@@ -11,10 +11,6 @@ const styles = theme => ({
 
 class Dashboard extends Component {
 
-  constructor() {
-    super();
-  }
-
   render() {
     const {classes} = this.props;
 
