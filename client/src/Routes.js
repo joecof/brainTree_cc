@@ -1,7 +1,9 @@
 import React, { Component } from "react";
 import { Route, Switch } from "react-router-dom";
 import Dashboard from './Dashboard'
+import NavigationGroup from './NavigationGroup'
 import Login from './Login'
+import BraintreeForm from './BraintreeForm'
 
 export default class Routes extends Component {
   
@@ -33,10 +35,49 @@ export default class Routes extends Component {
                   render={(props) => (
                     <Dashboard
                       {...props}
-                      user = {this.props.user}
                       clientToken = {this.props.clientToken}
                       getClientToken = {this.props.getClientToken}
                       logoutHandler = {this.props.logoutHandler}
+                    />)}
+                  />
+                <Route 
+                  path={`${url}/delete`} 
+                  render={(props) => (
+                    <NavigationGroup
+                      {...props}
+                      clientToken = {this.props.clientToken}
+                      getClientToken = {this.props.getClientToken}
+                    />)}
+                  />
+                <Route 
+                  path={`${url}/menu`} 
+                  render={(props) => (
+                    <NavigationGroup
+                      {...props}
+                      clientToken = {this.props.clientToken}
+                      getClientToken = {this.props.getClientToken}
+                    />)}
+                  />
+                <Route 
+                  path={`${url}/paymentmethod`} 
+                  render={(props) => (
+                    <BraintreeForm
+                      {...props}
+                      type='paymentMethod'
+                      user = {this.props.user}
+                      clientToken = {this.props.clientToken}
+                      getClientToken = {this.props.getClientToken}
+                    />)}
+                  />
+                <Route 
+                  path={`${url}/checkout`} 
+                  render={(props) => (
+                    <BraintreeForm
+                      {...props}
+                      type='checkout'
+                      user = {this.props.user}
+                      clientToken = {this.props.clientToken}
+                      getClientToken = {this.props.getClientToken}
                     />)}
                   />
               </>

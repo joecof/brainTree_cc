@@ -1,29 +1,32 @@
-const braintree = require("braintree");
 const dbService = require('../db/database-service')
-
-const gateway = new braintree.BraintreeGateway({
-  environment: braintree.Environment.Sandbox,
-  merchantId: process.env.BRAINTREE_MERCHANT_ID,
-  publicKey: process.env.BRAINTREE_PUBLIC_KEY,
-  privateKey: process.env.BRAINTREE_PRIVATE_KEY
-});
+const {gateway} = require('../config/config')
 
 exports.generateToken = async (req, res, next) => {
   
   try {
     
-    const {user} = req.body;
+    const {user} = req.body;   
 
     const userInfo = await dbService.get('SELECT customerId FROM customers WHERE customerId=? AND name=? AND email=?', Object.values(user));
 
-    const customer = await gateway.customer.find(String(userInfo.customerId));
+    const customer = await gateway.clientToken.generate({customerId: userInfo.customerId});
 
-    const response = !customer ? await gateway.clientToken.generate({}) : await gateway.clientToken.generate({customerId: userInfo.customerId})
+    if(!customer) throw new Error('could not generate client token from customer')
 
-    if(!response) throw new Error('could not generate client token')
+    if(customer.success) {
+      return res.status(200).send({
+        clientToken: customer.clientToken, 
+        msg: `generated token from ${JSON.stringify(user)}`});
+    }
 
-    res.status(200).send(response.clientToken);
+    const anon = await gateway.clientToken.generate({});
+    if(!anon) throw new Error('could not generate client token from anon');     
 
+    res.status(200).send({
+      clientToken: anon.clientToken, 
+      msg: 'generated token from anon user'
+    });
+    
   } catch(e) {
     console.log(e);
     res.status(401).send(e.message);
@@ -35,25 +38,36 @@ exports.addPaymentMethod = async (req, res, next) => {
   try { 
 
     const { transaction, user } = req.body;
+
     const userInfo = await dbService.get('SELECT customerId FROM customers WHERE customerId=? AND name=? AND email=?', Object.values(user));
+
     if(!userInfo) throw new Error('customer does not exist in database');
 
-    const customer = {
-      id: userInfo.customerId,
-      firstName: userInfo.name,
-      email: userInfo.email,
+    const createdPaymentMethod = await gateway.paymentMethod.create({
+      customerId: String(userInfo.customerId),
       paymentMethodNonce: transaction.nonce
+    });
+
+    if(createdPaymentMethod.success) {
+      return res.status(200).send({
+        paymentToken: createdPaymentMethod.paymentMethod.token, 
+        msg: `created a new payment method for customer: ${userInfo.customerId}`
+      })
     }
 
-    const response = await gateway.customer.create(customer);
+    const createdCustomerWithPaymentMethod = await gateway.customer.create({
+      id: String(userInfo.customerId),
+      paymentMethodNonce: transaction.nonce
+    })
 
-    if(!response.success) throw new Error(response.message)
-
-    res.status(200).send({success: response.success, paymentToken:  response.customer.paymentMethods[0].token})    
+    res.status(200).send({
+      paymentToken: createdCustomerWithPaymentMethod.customer.paymentMethods[0].token,
+      msg: `created new customer with payment method`
+    })  
 
   } catch(e) {
     res.status(401).send({success: false, message: e.message})    
-    console.log(e.message);
+    console.log(`error message: ${e.message}`);
   }
 }
 
@@ -71,6 +85,7 @@ exports.checkout = async (req, res, next) => {
     }
   
     const response = await gateway.transaction.sale(config);
+
     if(!response) throw new Error('braintree transaction failed');
 
     res.status(200).send(response.success)    

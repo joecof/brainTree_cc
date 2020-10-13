@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
-import axios from 'axios';
 import DropIn from "braintree-web-drop-in-react";
-import { Button, Grid } from '@material-ui/core/';
+import { Grid, Button } from '@material-ui/core/';
 import { withStyles } from '@material-ui/core/styles';
+import axios from 'axios';
 
 const styles = theme => ({
   container: {
     width: '100%',
-    marginTop: 50
+    marginTop: 20
   }
 })
 
@@ -16,29 +16,16 @@ class BraintreeForm extends Component {
   constructor() {
     super();
 
-    this.instance = null; 
+    this.instance = null;
 
     this.state = {
       amount: 1, 
     }
   }
 
-  handlePayment = async () => {
-
-    try {
-      const transaction = await this.instance.requestPaymentMethod();
-
-      const data = {
-        amount: this.state.amount,
-        transaction: transaction, 
-      }
-
-      const response = await axios.post('/checkout', data); 
-      if(response.status !== 200) throw new Error('could not contact API on /checkout')
-
-    } catch(e) {
-      console.log(e);
-    }
+  componentDidMount() {
+    this.instance = null;
+    this.props.getClientToken();
   }
 
   addPaymentMethod = async () => {
@@ -53,10 +40,45 @@ class BraintreeForm extends Component {
       }
 
       const response = await axios.post('/addPaymentMethod', data); 
-      if(response.status !== 200) throw new Error('could not contact API on /customerCheckout')
+
+      if(response.status !== 200) throw new Error('could not contact API on /paymentmethod')
 
     } catch(e) {
       console.log(e);
+    }
+  }
+
+  checkout = async () => {
+
+    try {
+
+      const transaction = await this.instance.requestPaymentMethod();
+
+      const data = {
+        transaction: transaction,
+        user: this.props.user,
+        amount: this.state.amount
+      }
+
+      const response = await axios.post('/checkout', data);
+
+      if(response.status !== 200) throw new Error('could not contact API on /checkout')
+       
+    } catch(e) {
+      console.log(e);
+    }
+
+  }
+
+  determineAction = (type) => {
+
+    switch(type) {
+      case 'paymentMethod': 
+        return <Button variant='contained' color='primary' fullWidth onClick = {this.addPaymentMethod}> Add Payment Method</Button>
+      case 'checkout': 
+        return <Button variant='contained' color='primary' fullWidth onClick = {this.checkout}> Checkout </Button>
+      default: 
+        return;
     }
   }
 
@@ -71,11 +93,13 @@ class BraintreeForm extends Component {
               this.props.clientToken ? 
                 <>
                   <DropIn
-                    options={{authorization: this.props.clientToken}}
+                    options={{
+                      authorization: this.props.clientToken,
+                      vaultManager: true
+                    }}
                     onInstance={(instance) => (this.instance = instance)}
                   />
-                  {/* <Button variant = "contained" color="primary" fullWidth onClick = {this.handlePayment}>Submit</Button> */}
-                  <Button variant = "contained" color="primary" fullWidth onClick = {this.addPaymentMethod}>Submit</Button>
+                  {this.determineAction(this.props.type)}
                 </>
                 :
                 null

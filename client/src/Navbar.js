@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles'
-import {AppBar, Toolbar, Typography, Button} from '@material-ui/core/';
+import {AppBar, Toolbar, Typography, Button, Grid} from '@material-ui/core/';
+import { Link } from "react-router-dom";
 
 const styles = theme => ({
   root: {
@@ -9,6 +10,10 @@ const styles = theme => ({
   title: {
     flexGrow: 1,
   },
+  link: {
+    textDecoration: 'none',
+    color: 'white'
+  }
 })
 
 class Navbar extends Component {
@@ -19,10 +24,14 @@ class Navbar extends Component {
       <div className={classes.root}>
         <AppBar position="static">
           <Toolbar>
-            <Typography variant="h6" className={classes.title}>
-              Braintree
-            </Typography>
-            <Button color="inherit" onClick = {this.props.logoutHandler}>Logout</Button>
+            <Grid container spacing = {0}>
+              <Grid item xs = {11} align = 'left'>
+                <Link className = {classes.link} to="/dashboard/menu"> <Typography variant="h6" className={classes.title}>  Braintree  </Typography> </Link>
+              </Grid>
+              <Grid item xs = {1} align = 'right'>
+                <Button color="inherit" onClick = {this.props.logoutHandler}>Logout</Button>
+              </Grid>
+            </Grid>
           </Toolbar>
         </AppBar>
       </div>

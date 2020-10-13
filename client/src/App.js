@@ -46,7 +46,7 @@ class App extends Component {
       const {data, status} = await axios.post('/login', loginData);
       if(status !== 200) throw new Error('could not contact API on /login')
       if(data) this.setUserSession(data);      
-      this.props.history.push('/dashboard')
+      this.props.history.push('/dashboard/menu')
   
     } catch (e) {
       console.log(e);
@@ -72,7 +72,7 @@ class App extends Component {
     localStorage.setItem('user', JSON.stringify(data.customerInfo));
     localStorage.setItem('expiryDate', this.getExpiryDate().toISOString());
     sessionStorage.setItem('logged', true)
-    this.setState({isAuth: true})
+    this.setState({isAuth: true, user: data.customerInfo})
   }
 
   endUserSession = () => {
@@ -93,7 +93,7 @@ class App extends Component {
       const {data, status} = await axios.post('/generateToken', {user: this.state.user});
       if(status !== 200) return;
 
-      this.setState({ clientToken: data })
+      this.setState({ clientToken: data.clientToken })
 
     } catch(e) {
       console.log(e);
