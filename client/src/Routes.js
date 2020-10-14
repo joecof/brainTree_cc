@@ -5,6 +5,7 @@ import NavigationGroup from './NavigationGroup'
 import Delete from './Delete'
 import Login from './Login'
 import BraintreeForm from './BraintreeForm'
+import Refund from './Refund'
 
 export default class Routes extends Component {
   
@@ -76,6 +77,16 @@ export default class Routes extends Component {
                     <BraintreeForm
                       {...props}
                       type='checkout'
+                      user = {this.props.user}
+                      clientToken = {this.props.clientToken}
+                      getClientToken = {this.props.getClientToken}
+                    />)}
+                  />
+                <Route 
+                  path={`${url}/refund`} 
+                  render={(props) => (
+                    <Refund
+                      {...props}
                       user = {this.props.user}
                       clientToken = {this.props.clientToken}
                       getClientToken = {this.props.getClientToken}

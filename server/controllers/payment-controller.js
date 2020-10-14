@@ -9,8 +9,8 @@ const checkUserExistsInDB = async (user) => {
 
 /**
  * Generates a client token for the user. 
- * If the user is vaulted in braintree's API then cross-reference that ID and use it to generate the clientToken(the customers information will be serialized into the token)
- * Else if the user is not vaulted in braintree's API, then generate an anonymous clientToken. 
+ * If the user is vaulted in braintree's API then cross-reference that ID, and use it to generate the clientToken(the customers information will be serialized into the token)
+ * Else if the user is not vaulted in braintree's API, then generate an anonymous clientToken(no customer associated to token). 
  */
 exports.generateToken = async (req, res, next) => {
   
@@ -20,16 +20,25 @@ exports.generateToken = async (req, res, next) => {
 
     const userInfo = await checkUserExistsInDB(user)
 
+    /**
+     * generates a serialized client token w/ customer information 
+     */
     const customer = await gateway.clientToken.generate({customerId: userInfo.customerId});
 
     if(!customer) throw new Error('could not generate client token from customer')
 
+    /**
+     * customer.success is true if customer was vualted in braintree api 
+     */
     if(customer.success) {
       return res.status(200).send({
         clientToken: customer.clientToken, 
         msg: `generated token from ${JSON.stringify(user)}`});
     }
 
+    /**
+     * generates an anonymous clientToken
+     */
     const anon = await gateway.clientToken.generate({});
     if(!anon) throw new Error('could not generate client token from anon');     
 
@@ -58,7 +67,7 @@ exports.addPaymentMethod = async (req, res, next) => {
     const userInfo = await checkUserExistsInDB(user)
 
     /**
-     * creates a payment method for vaulted customer. If not succesfully will default to creating a new vaulted customer w/ given payment method.
+     * creates a payment method for vaulted customer. If not succesful, then will default to creating a new vaulted customer w/ given payment method.
      */
     const createdPaymentMethod = await gateway.paymentMethod.create({
       customerId: String(userInfo.customerId),
@@ -155,10 +164,14 @@ exports.checkout = async (req, res, next) => {
 
 exports.getTransactions = async (req, res, next) => {
 
+  const { user } = req.body;
+
+  const userInfo = await checkUserExistsInDB(user)
+
   let transactions = [];
 
   const stream = gateway.transaction.search((search) => {
-    search.customerId().is("11");
+    search.customerId().is(String(userInfo.customerId));
   });
 
   stream.on("ready", () => {
@@ -166,13 +179,27 @@ exports.getTransactions = async (req, res, next) => {
   });
 
   stream.on("data", (transaction) => {
-    console.log(transaction.amount);
-    transactions.push(transaction);
+
+    transactions.push({
+      transactionId: transaction.id,
+      amount: transaction.amount,
+      customer: transaction.customer.id,
+      status: transaction.status,
+      creditCard: {
+        cardType: transaction.creditCard.cardType,
+        last4: transaction.creditCard.last4,
+      }
+    });
   });
 
   stream.on("end", () => {
-    console.log('no more data');
+    console.log('stream ended: no more data');
+
+    res.status(200).send({
+      transactions: transactions,
+      msg: `transactions succesfully fetched for customer: ${userInfo.customerId}`
+    })
+
   });
   
-  res.status(200).send('found')
 }

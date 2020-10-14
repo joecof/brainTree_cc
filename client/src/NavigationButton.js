@@ -20,9 +20,6 @@ const useStyles = makeStyles({
     textDecoration: 'none',
     color: 'black'
   },
-  title: {
-    fontSize: 14,
-  },
 });
 
 export default function OutlinedCard(props) {

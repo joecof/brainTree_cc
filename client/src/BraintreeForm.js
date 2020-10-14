@@ -22,7 +22,7 @@ class BraintreeForm extends Component {
 
     this.state = {
       amount: 1, 
-      save: false
+      save: false,
     }
   }
 
@@ -57,8 +57,6 @@ class BraintreeForm extends Component {
 
     try {
 
-      console.log(await this.instance.isPaymentMethodRequestable());
-
       if(!this.state.save) {
 
         const transaction =  await this.instance.requestPaymentMethod();
@@ -83,6 +81,10 @@ class BraintreeForm extends Component {
       });
 
       if(checkout.status !== 200) throw new Error('could not contact API on /checkout')
+
+      this.setState({
+        save: false
+      })
        
     } catch(e) {
       console.log(e);
