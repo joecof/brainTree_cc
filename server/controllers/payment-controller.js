@@ -68,10 +68,14 @@ exports.addPaymentMethod = async (req, res, next) => {
 
     /**
      * creates a payment method for vaulted customer. If not succesful, then will default to creating a new vaulted customer w/ given payment method.
+     * always will set the last given payment method as default
      */
     const createdPaymentMethod = await gateway.paymentMethod.create({
       customerId: String(userInfo.customerId),
-      paymentMethodNonce: transaction.nonce
+      paymentMethodNonce: transaction.nonce,
+      options: {
+        makeDefault: true
+      }
     });
 
     if(createdPaymentMethod.success) {
@@ -82,11 +86,11 @@ exports.addPaymentMethod = async (req, res, next) => {
     }
 
     /**
-     * creates a new vualted customer w/ given payment method. 
+     * default action, creates a new vualted customer w/ given payment method. 
      */
     const createdCustomerWithPaymentMethod = await gateway.customer.create({
       id: String(userInfo.customerId),
-      paymentMethodNonce: transaction.nonce
+      paymentMethodNonce: transaction.nonce,
     })
 
     if(!createdCustomerWithPaymentMethod.success) {
@@ -102,16 +106,9 @@ exports.addPaymentMethod = async (req, res, next) => {
     })  
 
   } catch(e) {
+    
     res.status(401).send({success: false, message: e.message})    
     console.log(`error message: ${e.message}`);
-  }
-}
-
-exports.getPaymentMethod = async (req, res, next) => {
-  try {
-    
-  } catch(e) {
-
   }
 }
 
@@ -126,14 +123,17 @@ exports.checkout = async (req, res, next) => {
     const { transaction, amount, paymentMethodToken, user } = req.body; 
 
     const userInfo = await checkUserExistsInDB(user)
-
+    
     const config = {
       amount: amount,
       options: {
         submitForSettlement: true
       }
     }
-
+    /**
+     * if transaction is not defined then the transaction request is coming from a payment method.
+     * else if transaction is defined, then the transaction is manually inputted and coming from a one-time nonce token 
+     */
     if(!transaction) {
       config.paymentMethodToken = paymentMethodToken;
     } else {
@@ -149,8 +149,6 @@ exports.checkout = async (req, res, next) => {
       }))
     }
 
-    console.log(config);
-
     res.status(200).send({
       success: response.success,
       msg: `transaction was successfully created for customer: ${userInfo.customerId}`
@@ -162,20 +160,19 @@ exports.checkout = async (req, res, next) => {
   }
 }
 
+/**
+ * Gets all transactions for current user. 
+ */
 exports.getTransactions = async (req, res, next) => {
 
   const { user } = req.body;
 
   const userInfo = await checkUserExistsInDB(user)
 
-  let transactions = [];
+  const transactions = [];
 
   const stream = gateway.transaction.search((search) => {
     search.customerId().is(String(userInfo.customerId));
-  });
-
-  stream.on("ready", () => {
-    console.log(stream.searchResponse.length());
   });
 
   stream.on("data", (transaction) => {
@@ -197,6 +194,7 @@ exports.getTransactions = async (req, res, next) => {
 
     res.status(200).send({
       transactions: transactions,
+      transactionsLength: transactions.length,
       msg: `transactions succesfully fetched for customer: ${userInfo.customerId}`
     })
 

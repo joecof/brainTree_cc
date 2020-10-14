@@ -11,7 +11,6 @@ router.post('/login', authController.login);
 //braintree
 router.post('/generateToken', paymentController.generateToken);
 router.post('/addPaymentMethod', paymentController.addPaymentMethod);
-router.post('/getPaymentMethod', paymentController.getPaymentMethod)
 router.post('/checkout', paymentController.checkout);
 router.post('/getTransactions', paymentController.getTransactions)
 
