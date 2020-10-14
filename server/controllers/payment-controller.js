@@ -1,7 +1,11 @@
 const dbService = require('../db/database-service')
 const {gateway} = require('../config/config')
-const stream = require('stream');
-const readable = require('stream').Readable;
+
+const checkUserExistsInDB = async (user) => {
+  const userInfo = await dbService.get('SELECT customerId FROM customers WHERE customerId=? AND name=? AND email=?', Object.values(user));
+  if(!userInfo) throw new Error('customer does not exist in database');
+  return userInfo;
+}
 
 /**
  * Generates a client token for the user. 
@@ -14,7 +18,7 @@ exports.generateToken = async (req, res, next) => {
     
     const {user} = req.body;   
 
-    const userInfo = await dbService.get('SELECT customerId FROM customers WHERE customerId=? AND name=? AND email=?', Object.values(user));
+    const userInfo = await checkUserExistsInDB(user)
 
     const customer = await gateway.clientToken.generate({customerId: userInfo.customerId});
 
@@ -51,9 +55,7 @@ exports.addPaymentMethod = async (req, res, next) => {
 
     const { transaction, user } = req.body;
 
-    //checks if user exists in db
-    const userInfo = await dbService.get('SELECT customerId FROM customers WHERE customerId=? AND name=? AND email=?', Object.values(user));
-    if(!userInfo) throw new Error('customer does not exist in database');
+    const userInfo = await checkUserExistsInDB(user)
 
     /**
      * creates a payment method for vaulted customer. If not succesfully will default to creating a new vaulted customer w/ given payment method.
@@ -78,7 +80,12 @@ exports.addPaymentMethod = async (req, res, next) => {
       paymentMethodNonce: transaction.nonce
     })
 
-    if(!createdCustomerWithPaymentMethod.success) throw new Error(`could not vault and add payment method for new customer: ${userInfo.customerId}.`)
+    if(!createdCustomerWithPaymentMethod.success) {
+      throw new Error(JSON.stringify({
+        msg: `could not vault and add payment method for new customer: ${userInfo.customerId}.`,
+        reason: createdCustomerWithPaymentMethod.message
+      }))
+    }
 
     res.status(200).send({
       paymentToken: createdCustomerWithPaymentMethod.customer.paymentMethods[0].token,
@@ -88,6 +95,14 @@ exports.addPaymentMethod = async (req, res, next) => {
   } catch(e) {
     res.status(401).send({success: false, message: e.message})    
     console.log(`error message: ${e.message}`);
+  }
+}
+
+exports.getPaymentMethod = async (req, res, next) => {
+  try {
+    
+  } catch(e) {
+
   }
 }
 
@@ -101,9 +116,7 @@ exports.checkout = async (req, res, next) => {
 
     const { transaction, amount, paymentMethodToken, user } = req.body; 
 
-    const userInfo = await dbService.get('SELECT customerId FROM customers WHERE customerId=? AND name=? AND email=?', Object.values(user));
-
-    if(!userInfo) throw new Error('user does not exist in database');
+    const userInfo = await checkUserExistsInDB(user)
 
     const config = {
       amount: amount,
@@ -120,11 +133,18 @@ exports.checkout = async (req, res, next) => {
   
     const response = await gateway.transaction.sale(config);
 
-    if(!response.success) throw new Error('transaction was unsuccessful')
+    if(!response.success) {
+      throw new Error(JSON.stringify({
+        msg: `transaction was unsuccessful for customer: ${userInfo.customerId}`,
+        reason: response.message
+      }))
+    }
+
+    console.log(config);
 
     res.status(200).send({
       success: response.success,
-      msg: `transaction was successfully created`
+      msg: `transaction was successfully created for customer: ${userInfo.customerId}`
     })    
 
   } catch(e) {
@@ -146,17 +166,13 @@ exports.getTransactions = async (req, res, next) => {
   });
 
   stream.on("data", (transaction) => {
-    console.log(transaction);
+    console.log(transaction.amount);
     transactions.push(transaction);
   });
 
   stream.on("end", () => {
-    for (let i = transactions.length - 1; i >= 0; i--) {
-      console.log(transactions[i]);
-    };
+    console.log('no more data');
   });
-
-  console.log(transactions);
   
   res.status(200).send('found')
 }

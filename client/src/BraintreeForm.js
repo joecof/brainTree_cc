@@ -21,7 +21,7 @@ class BraintreeForm extends Component {
     this.instance = null;
 
     this.state = {
-      amount: 23, 
+      amount: 1, 
       save: false
     }
   }
@@ -57,15 +57,19 @@ class BraintreeForm extends Component {
 
     try {
 
+      console.log(await this.instance.isPaymentMethodRequestable());
+
       if(!this.state.save) {
+
+        const transaction =  await this.instance.requestPaymentMethod();
+
         const checkout = await axios.post('/checkout', {
-          transaction:  await this.instance.requestPaymentMethod(),
+          transaction:  transaction,
           user: this.props.user,
           amount: this.state.amount
         });
 
         if(checkout.status !== 200) throw new Error('could not contact API on /checkout')
-
         return;
       }
 
