@@ -31,7 +31,9 @@ class RefundTable extends Component {
   render() {
 
     const { classes } = this.props;
+
     return(
+
       this.props.transactions.length  <= 0 ?
       <Grid container spacing = {0}>
         <Grid item xs = {12} align = 'center'>

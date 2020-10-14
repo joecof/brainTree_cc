@@ -27,8 +27,8 @@ class BraintreeForm extends Component {
   }
 
   componentDidMount() {
-    this.instance = null;
     this.props.getClientToken();
+    this.instance = null;
   }
 
   handleChange = (event) => {
@@ -38,7 +38,6 @@ class BraintreeForm extends Component {
   addPaymentMethod = async () => {
     
     try {
-
       const addedPaymentMethod = await axios.post('/addPaymentMethod', {
         transaction: await this.instance.requestPaymentMethod(),
         user: this.props.user
@@ -85,6 +84,8 @@ class BraintreeForm extends Component {
       this.setState({
         save: false
       })
+
+      this.props.activateCheckoutLoader();
        
     } catch(e) {
       console.log(e);
@@ -117,19 +118,18 @@ class BraintreeForm extends Component {
         <Grid container spacing = {0} className={classes.container}>
           <Grid item xs = {12}>
             {
-              this.props.clientToken ? 
-                <>
-                  <DropIn
-                    options={{
-                      authorization: this.props.clientToken,
-                      vaultManager: true
-                    }}
-                    onInstance={(instance) => (this.instance = instance)}
-                  />
-                  {this.determineAction(this.props.type)}
-                </>
-                :
-                null
+              this.props.clientToken && 
+              <>
+                <DropIn
+                  key={this.props.type}
+                  options={{
+                    authorization: this.props.clientToken,
+                    vaultManager: true
+                  }}
+                  onInstance={(instance) => (this.instance = instance)}
+                />
+                {this.determineAction(this.props.type)}
+              </>
             }
           </Grid>
         </Grid>

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import Navbar from './Navbar'
 import { Grid } from '@material-ui/core/';
+import CheckoutLoader from './CheckoutLoader'
 import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
@@ -18,6 +19,7 @@ class Dashboard extends Component {
       <div>
         <Grid container spacing = {0} className = {classes.container}>
           <Grid item xs = {12}> <Navbar logoutHandler = {this.props.logoutHandler}/> </Grid>
+            <CheckoutLoader/>
         </Grid>
       </div>
     )

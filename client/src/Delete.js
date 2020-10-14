@@ -20,7 +20,10 @@ export default class Delete extends Component {
     try {
       const response = await axios.post('/customer/delete', this.props.user)
 
-      if(response.status !== 200) this.setState({msg: `could not delete braintree customer: ${JSON.stringify(this.props.user)}`})
+      if(response.status !== 200) {
+        this.setState({msg: `could not delete braintree customer: ${JSON.stringify(this.props.user)}`})
+        return;
+      }
 
       this.setState({msg: `deleted braintree customer: ${JSON.stringify(this.props.user)}`})
 
@@ -34,7 +37,7 @@ export default class Delete extends Component {
   render() {
     return (
       <div>
-        {this.state.msg}
+        <h2>{this.state.msg}</h2>
       </div>
     )
   }

@@ -12,6 +12,9 @@ const Container = (props) => {
         logoutHandler = {props.logoutHandler}
         getClientToken = {props.getClientToken}
         clientToken = {props.clientToken}
+        activateCheckoutLoader = {props.activateCheckoutLoader}
+        deactivateCheckoutLoader = {props.deactivateCheckoutLoader}
+        loaderStatus = {props.loaderStatus}
       />
     </>
   )

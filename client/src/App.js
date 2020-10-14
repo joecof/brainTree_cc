@@ -28,6 +28,7 @@ class App extends Component {
       isAuth: false, 
       user: null,
       clientToken: '',
+      loaderStatus: false
     }
   }
 
@@ -58,6 +59,19 @@ class App extends Component {
     this.props.history.push('/');
   }
 
+  getClientToken = async () => {
+    try {
+
+      const {data, status} = await axios.post('/generateToken', {user: this.state.user});
+      if(status !== 200) return;
+
+      this.setState({ clientToken: data.clientToken })
+
+    } catch(e) {
+      console.log(e);
+    }
+  }
+
   isSessionValid = () => sessionStorage.getItem('logged');
 
   getUserSessionInfo = () => {
@@ -86,19 +100,6 @@ class App extends Component {
   getRemainingSessionTime = () => new Date(localStorage.getItem('expiryDate')).getTime() - new Date().getTime();
   getExpiryDate = () => new Date(new Date().getTime() + 60 * 60 * 1000);
   setAutoLogout = (milliseconds) => setTimeout(() => {this.logoutHandler();}, milliseconds);
-
-  getClientToken = async () => {
-    try {
-
-      const {data, status} = await axios.post('/generateToken', {user: this.state.user});
-      if(status !== 200) return;
-
-      this.setState({ clientToken: data.clientToken })
-
-    } catch(e) {
-      console.log(e);
-    }
-  }
 
   render() {
     const {classes} = this.props;
