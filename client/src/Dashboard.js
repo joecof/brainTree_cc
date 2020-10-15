@@ -19,7 +19,7 @@ class Dashboard extends Component {
       <div>
         <Grid container spacing = {0} className = {classes.container}>
           <Grid item xs = {12}> <Navbar logoutHandler = {this.props.logoutHandler}/> </Grid>
-            <CheckoutLoader/>
+          <CheckoutLoader/>
         </Grid>
       </div>
     )

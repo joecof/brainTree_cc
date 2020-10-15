@@ -25,7 +25,8 @@ exports.generateToken = async (req, res, next) => {
      */
     const customer = await gateway.clientToken.generate({customerId: userInfo.customerId});
 
-    if(!customer) throw new Error('could not generate client token from customer')
+    if(!customer) 
+      throw new Error('could not generate client token from customer')
 
     /**
      * customer.success is true if customer was vualted in braintree api 
@@ -40,7 +41,9 @@ exports.generateToken = async (req, res, next) => {
      * generates an anonymous clientToken
      */
     const anon = await gateway.clientToken.generate({});
-    if(!anon) throw new Error('could not generate client token from anon');     
+
+    if(!anon) 
+      throw new Error('could not generate client token from anon');     
 
     res.status(200).send({
       clientToken: anon.clientToken, 
@@ -200,4 +203,64 @@ exports.getTransactions = async (req, res, next) => {
 
   });
   
+}
+
+/**
+ * Refunds a transaction 
+ */
+exports.refund = async (req, res, next) => {
+
+  try {
+
+    const { user, transactionId } = req.body;  
+
+    const userInfo = await checkUserExistsInDB(user);
+
+    const response = await gateway.transaction.refund(String(transactionId)); 
+
+    if(!response.sucess) {
+      throw new Error(JSON.stringify({
+        msg: `refund was unsuccessful for customer: ${userInfo.customerId} and transaction: ${transactionId}`,
+        reason: response.message
+      }))
+    }
+
+    res.status(200).send({
+      success: response.success,
+      msg: `refund was succesful for customer: ${userInfo.customerId} and transaction: ${transactionId}`
+    })
+
+  } catch (e) {
+    console.log(e);
+    res.status(401).send(e.message);
+  }
+}
+
+/**
+ * Voids a transaction 
+ */
+exports.void = async (req, res, next) => {
+
+  try {
+    const { user, transactionId } = req.body; 
+    const userInfo = await checkUserExistsInDB(user);
+
+    const response = await gateway.transaction.void(String(transactionId));
+
+    if(!response.success) {
+      throw new Error(JSON.stringify({
+        msg: `void was unsuccessful for customer: ${userInfo.customerId} and transaction: ${transactionId}`,
+        reason: response.message
+      }))
+    }
+
+    res.status(200).send({
+      success: response.success,
+      msg: `void was succesful for customer: ${userInfo.customerId} and transaction: ${transactionId}`
+    })
+
+  } catch(e) {
+    console.log(e);
+    res.status(401).send(e.message);
+  }
 }

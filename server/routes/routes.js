@@ -9,10 +9,12 @@ const router = express.Router();
 router.post('/login', authController.login);
 
 //braintree
-router.post('/generateToken', paymentController.generateToken);
-router.post('/addPaymentMethod', paymentController.addPaymentMethod);
+router.post('/generateToken', paymentController.generateToken)
+router.post('/addPaymentMethod', paymentController.addPaymentMethod)
 router.post('/checkout', paymentController.checkout);
 router.post('/getTransactions', paymentController.getTransactions)
+router.post('/refund', paymentController.refund)
+router.post('/void', paymentController.void)
 
 //braintree - customer
 router.post('/customer/delete', braintreeCustomerController.delete)

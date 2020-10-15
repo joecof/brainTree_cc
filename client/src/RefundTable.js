@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import { withStyles } from '@material-ui/core/styles';
+import axios from 'axios'
 import {Grid, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress} from '@material-ui/core';
 
 const styles = () => ({
@@ -27,6 +28,44 @@ const StyledTableRow = withStyles((theme) => ({
 }))(TableRow);
 
 class RefundTable extends Component {
+
+  handleRefund = async (transactionId) => {
+
+    try {
+      const response = await axios.post('/refund', {user: this.props.user, transactionId: transactionId})
+
+      if(response.status !== 200) {
+        throw new Error();
+      }
+
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  handleVoid = async (transactionId) => {
+
+    try {
+
+      const response = await axios.post('/void', {user: this.props.user, transactionId: transactionId})
+
+      if(response.status !== 200) {
+        throw new Error();
+      }
+
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  determineAction = (type, transactionId) => {
+    switch(type) {
+      case 'settled': 
+        return <Button variant='contained' color='secondary' fullWidth onClick = {() => this.handleRefund(transactionId)}> Refund </Button>
+      default: 
+        return <Button variant='contained' color='primary' fullWidth onClick = {() => this.handleVoid(transactionId)}> Void </Button>;
+    }
+  }
 
   render() {
 
@@ -67,7 +106,7 @@ class RefundTable extends Component {
                 <StyledTableCell align="right">{row.creditCard.cardType}</StyledTableCell>
                 <StyledTableCell align="right">{row.creditCard.last4}</StyledTableCell>
                 <StyledTableCell align="right">{row.amount}</StyledTableCell>
-                <StyledTableCell align="right"><Button color='secondary' variant='contained'>Refund</Button></StyledTableCell>
+                <StyledTableCell align='right'>{this.props.determineAction(row.status, row.transactionId)}</StyledTableCell>
               </StyledTableRow>)
             })
           }

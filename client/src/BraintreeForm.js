@@ -71,7 +71,6 @@ class BraintreeForm extends Component {
       }
 
       const savedPaymentMethod = await this.addPaymentMethod();
-      if(!savedPaymentMethod) throw new Error('could not contact API on /addPaymentmethod')
 
       const checkout = await axios.post('/checkout', {
         paymentMethodToken: savedPaymentMethod.data.paymentToken,
@@ -84,8 +83,6 @@ class BraintreeForm extends Component {
       this.setState({
         save: false
       })
-
-      this.props.activateCheckoutLoader();
        
     } catch(e) {
       console.log(e);

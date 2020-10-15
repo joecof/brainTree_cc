@@ -28,7 +28,6 @@ class App extends Component {
       isAuth: false, 
       user: null,
       clientToken: '',
-      loaderStatus: false
     }
   }
 
@@ -99,7 +98,7 @@ class App extends Component {
 
   getRemainingSessionTime = () => new Date(localStorage.getItem('expiryDate')).getTime() - new Date().getTime();
   getExpiryDate = () => new Date(new Date().getTime() + 60 * 60 * 1000);
-  setAutoLogout = (milliseconds) => setTimeout(() => {this.logoutHandler();}, milliseconds);
+  setAutoLogout = (milliseconds) => setTimeout(() => {this.logoutHandler();}, milliseconds)
 
   render() {
     const {classes} = this.props;

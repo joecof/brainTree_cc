@@ -12,7 +12,7 @@ export default function LinearDeterminate() {
   const classes = useStyles();
   const [progress, setProgress] = React.useState(0);
 
-  React.useEffect((props) => {
+  React.useEffect(() => {
     const timer = setInterval(() => {
       setProgress((oldProgress) => {
         if (oldProgress === 100) {
