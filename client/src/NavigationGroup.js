@@ -42,11 +42,11 @@ export default function () {
       <Grid container spacing = {1}>
         <Grid item xs = {12}>
           <Grid container spacing = {3}>
-            <Grid item xs = {12} ssm = {12} md = {6} >
-              <NavigationButton 
-                name = "Subscribe"
-                color = "#96ceb4"
-                link = "/dashboard/subscribe"
+            <Grid item xs = {12} sm = {12} md = {6}>
+              <NavigationButton
+                name = "3DS Checkout"
+                color = "#ffdf6c "
+                link = "/dashboard/3ds"
               />
             </Grid>
             <Grid item xs = {12} sm = {12} md = {6}>
@@ -54,6 +54,13 @@ export default function () {
                 name = "Checkout"
                 color = "#ffeead"
                 link = "/dashboard/checkout"
+              />
+            </Grid>
+            <Grid item xs = {12} ssm = {12} md = {6} >
+              <NavigationButton 
+                name = "Subscribe"
+                color = "#96ceb4"
+                link = "/dashboard/subscribe"
               />
             </Grid>
             <Grid item xs = {12} sm = {12} md = {6}>
@@ -70,7 +77,7 @@ export default function () {
                 link = "/dashboard/refund"
               />
             </Grid>
-            <Grid item xs = {12} sm = {12} md = {12}>
+            <Grid item xs = {12} sm = {12} md = {6}>
               <NavigationButton
                 name = "Delete From Braintree"
                 color = "#8b9dc3 "

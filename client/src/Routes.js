@@ -61,6 +61,17 @@ export default class Routes extends Component {
                     />)}
                   />
                 <Route 
+                  path={`${url}/3ds`} 
+                  render={(props) => (
+                    <BraintreeForm
+                      {...props}
+                      type='3ds'
+                      user = {this.props.user}
+                      clientToken = {this.props.clientToken}
+                      getClientToken = {this.props.getClientToken}
+                    />)}
+                  />
+                <Route 
                   path={`${url}/paymentmethod`} 
                   render={(props) => (
                     <BraintreeForm

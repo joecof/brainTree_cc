@@ -35,11 +35,14 @@ class BraintreeForm extends Component {
     this.setState({ ...this.state, [event.target.name]: event.target.checked });
   };
 
-  addPaymentMethod = async () => {
+  addPaymentMethod = async (config) => {
     
     try {
+
+      config = config ? config : {}; 
+      
       const addedPaymentMethod = await axios.post('/addPaymentMethod', {
-        transaction: await this.instance.requestPaymentMethod(),
+        transaction: await this.instance.requestPaymentMethod(config),
         user: this.props.user
       }); 
 
@@ -71,7 +74,7 @@ class BraintreeForm extends Component {
       }
 
       const savedPaymentMethod = await this.addPaymentMethod();
-
+      
       const checkout = await axios.post('/checkout', {
         paymentMethodToken: savedPaymentMethod.data.paymentToken,
         user: this.props.user,
@@ -89,6 +92,78 @@ class BraintreeForm extends Component {
     }
   }
 
+  threeDsCheckout = async () => {
+    try {
+
+      var threeDSecureParameters = {
+        amount: this.state.amount,
+        email: 'test@example.com',
+        /**
+         * Everything below is unnecessary to pass 3ds authentication during testing.
+         * It will be necessary once in production to pass the 3ds look up validation 
+         */
+        billingAddress: {
+          givenName: 'Jill', // ASCII-printable characters required, else will throw a validation error
+          surname: 'Doe', // ASCII-printable characters required, else will throw a validation error
+          phoneNumber: '8101234567',
+          streetAddress: '555 Smith St.',
+          extendedAddress: '#5',
+          locality: 'Oakland',
+          region: 'CA',
+          postalCode: '12345',
+          countryCodeAlpha2: 'US'
+        },
+        additionalInformation: {
+          workPhoneNumber: '8101234567',
+          shippingGivenName: 'Jill',
+          shippingSurname: 'Doe',
+          shippingPhone: '8101234567',
+          shippingAddress: {
+            streetAddress: '555 Smith St.',
+            extendedAddress: '#5',
+            locality: 'Oakland',
+            region: 'CA',
+            postalCode: '12345',
+            countryCodeAlpha2: 'US'
+          }
+        },
+      };
+
+      if(!this.state.save) {
+
+        const transaction =  await this.instance.requestPaymentMethod({
+          threeDSecure: threeDSecureParameters
+        });
+        
+        const checkout = await axios.post('/3dsCheckout', {
+          transaction:  transaction,
+          user: this.props.user,
+          amount: this.state.amount
+        });
+
+        if(checkout.status !== 200) throw new Error('could not contact API on /checkout')
+        return;
+      }
+
+      const savedPaymentMethod = await this.addPaymentMethod({
+        threeDSecure: threeDSecureParameters
+      });
+      
+      const checkout = await axios.post('/3dsCheckout', {
+        paymentMethodToken: savedPaymentMethod.data.paymentToken,
+        user: this.props.user,
+        amount: this.state.amount
+      });
+
+      if(checkout.status !== 200) throw new Error('could not contact API on /checkout')
+
+      this.setState({ save: false })
+
+    } catch(e) {
+      console.log(e);
+    }
+  }
+
   determineAction = (type) => {
 
     switch(type) {
@@ -101,6 +176,14 @@ class BraintreeForm extends Component {
             control={<Checkbox  name="save" onChange={this.handleChange}/>}
             label="Save Payment Method" /> 
           <Button variant='contained' color='primary' fullWidth onClick = {this.checkout}> Checkout </Button>
+        </> )
+      case '3ds': 
+      return (
+        <> 
+          <FormControlLabel
+            control={<Checkbox  name="save" onChange={this.handleChange}/>}
+            label="Save Payment Method" /> 
+          <Button variant='contained' color='primary' fullWidth onClick = {this.threeDsCheckout}> 3DS Checkout </Button>
         </> )
       default: 
         return;
@@ -121,7 +204,16 @@ class BraintreeForm extends Component {
                   key={this.props.type}
                   options={{
                     authorization: this.props.clientToken,
-                    vaultManager: true
+                    vaultManager: true,
+                    threeDSecure: this.props.type === '3ds',
+                    dataCollector: {
+                      client: this.instance,
+                    },
+                    paypal: {
+                      flow: 'vault',
+                      amount: this.state.amount,
+                      currency: 'CAD'
+                    }
                   }}
                   onInstance={(instance) => (this.instance = instance)}
                 />

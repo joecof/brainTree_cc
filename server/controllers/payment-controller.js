@@ -84,7 +84,8 @@ exports.addPaymentMethod = async (req, res, next) => {
     if(createdPaymentMethod.success) {
       return res.status(200).send({
         paymentToken: createdPaymentMethod.paymentMethod.token, 
-        msg: `created a new payment method for customer: ${userInfo.customerId}`
+        creditCardVerificationStatus: createdPaymentMethod.creditCard.verification.status,
+        msg: `created a new payment method for customer: ${userInfo.customerId}`,
       })
     }
 
@@ -96,7 +97,7 @@ exports.addPaymentMethod = async (req, res, next) => {
       paymentMethodNonce: transaction.nonce,
     })
 
-    if(!createdCustomerWithPaymentMethod.success) {
+    if(!createdCustomerWithPaymentMethod.success && createdCustomerWithPaymentMethod.customer.paymentMethods[0].verification.status !== 'verified') {
       throw new Error(JSON.stringify({
         msg: `could not vault and add payment method for new customer: ${userInfo.customerId}.`,
         reason: createdCustomerWithPaymentMethod.message
@@ -105,6 +106,7 @@ exports.addPaymentMethod = async (req, res, next) => {
 
     res.status(200).send({
       paymentToken: createdCustomerWithPaymentMethod.customer.paymentMethods[0].token,
+      creditCardVerificationStatus: createdCustomerWithPaymentMethod.customer.paymentMethods[0].verification.status,
       msg: `created new customer with payment method for customer: ${userInfo.customerId}`
     })  
 
@@ -117,7 +119,7 @@ exports.addPaymentMethod = async (req, res, next) => {
 
 /**
  * Creates a transaction w/ braintree. 
- * If transaction is defined then the transaction is coming anonymously. 
+ * If transaction (nonce) is defined then the transaction is coming anonymously. 
  * Else if the transaction is not defined, then the transaction is coming from a vaulted customer, and paymentMethodToken is used to process the transaction. 
  */
 exports.checkout = async (req, res, next) => {
@@ -129,6 +131,7 @@ exports.checkout = async (req, res, next) => {
     
     const config = {
       amount: amount,
+      deviceData: transaction.deviceData,
       options: {
         submitForSettlement: true
       }
@@ -164,7 +167,54 @@ exports.checkout = async (req, res, next) => {
 }
 
 /**
- * Gets all transactions for current user. 
+ * Identical to checkout. 
+ * Provides another endpoint for sepcifically 3ds checkout testing. 
+ */
+exports.threeDsCheckout = async (req, res, next) => {
+  try {
+
+    const { transaction, amount, paymentMethodToken, user } = req.body; 
+
+    const userInfo = await checkUserExistsInDB(user);
+
+    const config = {
+      amount: amount,
+      deviceData: transaction.deviceData,
+      options: {
+        submitForSettlement: true
+      }
+    }
+
+    if(!transaction) {
+      config.paymentMethodToken = paymentMethodToken;
+    } else {
+      config.paymentMethodNonce = transaction.nonce
+    }
+  
+    const response = await gateway.transaction.sale(config);
+
+    if(!response.success) {
+      throw new Error(JSON.stringify({
+        msg: `transaction was unsuccessful for customer: ${userInfo.customerId}`,
+        reason: response.message
+      }))
+    }
+
+    res.status(200).send({
+      success: response.success,
+      msg: `transaction was successfully created for customer: ${userInfo.customerId}`,
+      threeDSecureInfo: response.transaction.threeDSecureInfo
+    })    
+
+  } catch(e) {
+    console.log(e);
+  }
+}
+
+/**
+ * Gets all transactions for current user from Braintree.
+ * This function may be deprecated later since transaction information will be stored in DB instead. 
+ * As long as we do a check to ensure the transaction data matches our DB then we can refer to our DB instead (faster, reliable)
  */
 exports.getTransactions = async (req, res, next) => {
 
@@ -179,12 +229,15 @@ exports.getTransactions = async (req, res, next) => {
   });
 
   stream.on("data", (transaction) => {
-
+    
     transactions.push({
       transactionId: transaction.id,
       amount: transaction.amount,
       customer: transaction.customer.id,
       status: transaction.status,
+      refundId: transaction.refundId,
+      refundIds: transaction.refundIds,
+      refundedTransactionId: transaction.refundedTransactionId,
       creditCard: {
         cardType: transaction.creditCard.cardType,
         last4: transaction.creditCard.last4,
@@ -202,7 +255,6 @@ exports.getTransactions = async (req, res, next) => {
     })
 
   });
-  
 }
 
 /**
@@ -213,18 +265,17 @@ exports.refund = async (req, res, next) => {
   try {
 
     const { user, transactionId } = req.body;  
-
     const userInfo = await checkUserExistsInDB(user);
 
     const response = await gateway.transaction.refund(String(transactionId)); 
 
-    if(!response.sucess) {
+    if(!response.success) {
       throw new Error(JSON.stringify({
         msg: `refund was unsuccessful for customer: ${userInfo.customerId} and transaction: ${transactionId}`,
         reason: response.message
       }))
     }
-
+    
     res.status(200).send({
       success: response.success,
       msg: `refund was succesful for customer: ${userInfo.customerId} and transaction: ${transactionId}`

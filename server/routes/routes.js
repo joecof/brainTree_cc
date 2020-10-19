@@ -12,6 +12,7 @@ router.post('/login', authController.login);
 router.post('/generateToken', paymentController.generateToken)
 router.post('/addPaymentMethod', paymentController.addPaymentMethod)
 router.post('/checkout', paymentController.checkout);
+router.post('/3dsCheckout', paymentController.threeDsCheckout)
 router.post('/getTransactions', paymentController.getTransactions)
 router.post('/refund', paymentController.refund)
 router.post('/void', paymentController.void)

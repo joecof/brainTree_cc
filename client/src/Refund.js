@@ -29,10 +29,17 @@ class Refund extends Component {
   getTransactions = async () => {
     const transactions = await axios.post('/getTransactions', {user: this.props.user});
 
+    const sanitizedTransactions = transactions.data.transactions.map(item => {
+      if(item.refundId) item.status = `${item.status}/refunded`
+      if(item.refundedTransactionId) item.status = `${item.status} refund from ${item.refundedTransactionId}`
+      return item;
+    })
+
     this.setState({
-      transactions: transactions.data.transactions
+      transactions: sanitizedTransactions
     })
   }
+  
 
   handleRefund = async (transactionId) => {
     try {
